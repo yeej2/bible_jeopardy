@@ -116,6 +116,10 @@ export default function Controller() {
     socket.emit('timeoutAnswer', { roomCode });
   };
 
+  const markHostCorrect = () => {
+    socket.emit('hostMarkCorrect', { roomCode });
+  };
+
   const nextQuestion = () => {
     socket.emit('nextQuestion', { roomCode });
   };
@@ -377,9 +381,14 @@ export default function Controller() {
           </button>
         )}
         {isHost && (
-          <p className="text-center" style={{ color: '#2ecc71' }}>
-            Buzzing is open!
-          </p>
+          <div className="center column gap-sm" style={{ width: '100%', maxWidth: 420, marginTop: 8 }}>
+            <p className="text-center" style={{ color: '#2ecc71' }}>
+              Buzzing is open!
+            </p>
+            <div className="card" style={{ width: '100%' }}>
+              <strong>Answer:</strong> {state.currentClue.answer}
+            </div>
+          </div>
         )}
         {renderHostControls()}
       </div>
@@ -437,8 +446,11 @@ export default function Controller() {
         {isHost && (
           <div className="center column gap-sm" style={{ width: '100%', maxWidth: 360 }}>
             <p className="text-center">Waiting for {state.teams.find((t) => t.id === state.activeTeamId)?.name} to answer...</p>
+            <div className="card" style={{ width: '100%' }}>
+              <strong>Answer:</strong> {state.currentClue.answer}
+            </div>
             <div className="center gap" style={{ flexWrap: 'wrap' }}>
-              <button style={{ background: '#2ecc71' }} onClick={() => judge(true)}>Correct</button>
+              <button style={{ background: '#2ecc71' }} onClick={markHostCorrect}>Correct</button>
               <button style={{ background: '#e74c3c' }} onClick={timeout}>Time's Up / No Answer</button>
             </div>
           </div>
@@ -459,9 +471,14 @@ export default function Controller() {
           {state.teams.find((t) => t.id === state.currentClue.answeringTeamId)?.name} answered: <strong>{state.currentClue.submittedAnswer || '(no answer)'}</strong>
         </p>
         {isHost && (
-          <div className="center gap" style={{ flexWrap: 'wrap' }}>
-            <button style={{ background: '#2ecc71' }} onClick={() => judge(true)}>Correct</button>
-            <button style={{ background: '#e74c3c' }} onClick={() => judge(false)}>Wrong</button>
+          <div className="center column gap-sm" style={{ width: '100%', maxWidth: 360 }}>
+            <div className="card" style={{ width: '100%' }}>
+              <strong>Answer:</strong> {state.currentClue.answer}
+            </div>
+            <div className="center gap" style={{ flexWrap: 'wrap' }}>
+              <button style={{ background: '#2ecc71' }} onClick={() => judge(true)}>Correct</button>
+              <button style={{ background: '#e74c3c' }} onClick={() => judge(false)}>Wrong</button>
+            </div>
           </div>
         )}
         {!isHost && <p className="text-center">Waiting for the host...</p>}

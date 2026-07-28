@@ -244,6 +244,21 @@ export function judgeAnswer(room, correct) {
   return true;
 }
 
+export function hostMarkCorrect(room) {
+  if (room.phase !== 'answering' && room.phase !== 'dailydouble') return false;
+  const teamId = room.activeTeamId;
+  const team = room.teams.get(teamId);
+  const clue = room.currentClue;
+  if (!team || !clue) return false;
+  const value = clue.wager || clue.value;
+  team.score += value;
+  room.activeTeamId = teamId;
+  room.phase = 'answer_revealed';
+  room.timerEnd = null;
+  checkRoundComplete(room);
+  return true;
+}
+
 export function submitWager(room, teamId, amount) {
   if (room.phase === 'dailydouble') {
     const team = room.teams.get(teamId);
@@ -257,7 +272,7 @@ export function submitWager(room, teamId, amount) {
   }
   if (room.phase === 'final_wager') {
     const team = room.teams.get(teamId);
-    const maxWager = Math.max(0, team.score);
+    const maxWager = Math.max(0, Math.abs(team.score));
     const wager = Math.max(0, Math.min(amount, maxWager));
     room.finalWagers[teamId] = wager;
     room.currentClue.wagers = room.currentClue.wagers || {};
@@ -328,13 +343,28 @@ export function timeoutAnswer(room) {
   if (!team || !clue) return false;
   const value = clue.wager || clue.value;
   team.score -= value;
-  room.currentClue = null;
-  room.buzzOrder = [];
-  room.attemptedTeams = new Set();
-  room.timerEnd = null;
-  room.phase = 'board';
-  room.activeTeamId = room.selectedByTeamId;
-  checkRoundComplete(room);
+  room.attemptedTeams.add(teamId);
+
+  if (room.phase === 'dailydouble') {
+    room.activeTeamId = room.selectedByTeamId;
+    room.phase = 'answer_revealed';
+    room.timerEnd = null;
+    return true;
+  }
+
+  const remaining = Array.from(room.teams.keys()).filter(
+    (t) => !room.attemptedTeams.has(t)
+  );
+  if (remaining.length > 0) {
+    room.activeTeamId = null;
+    room.phase = 'clue';
+    room.timerEnd = null;
+    room.buzzOrder = [];
+  } else {
+    room.activeTeamId = room.selectedByTeamId;
+    room.phase = 'answer_revealed';
+    room.timerEnd = null;
+  }
   return true;
 }
 

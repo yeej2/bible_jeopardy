@@ -28,6 +28,7 @@ import {
   timeoutAnswer,
   nextQuestion,
   releaseFinalQuestion,
+  hostMarkCorrect,
   endGame,
   getPublicState,
 } from './game.js';
@@ -149,6 +150,14 @@ io.on('connection', (socket) => {
     const player = Array.from(room.players.values()).find((p) => p.socketId === socket.id);
     if (!player?.isHost) return;
     if (timeoutAnswer(room)) broadcast(room);
+  });
+
+  socket.on('hostMarkCorrect', ({ roomCode }) => {
+    const room = getRoom(roomCode.toUpperCase());
+    if (!room) return;
+    const player = Array.from(room.players.values()).find((p) => p.socketId === socket.id);
+    if (!player?.isHost) return;
+    if (hostMarkCorrect(room)) broadcast(room);
   });
 
   socket.on('nextQuestion', ({ roomCode }) => {
