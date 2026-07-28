@@ -162,6 +162,11 @@ export default function Board() {
           >
             {currentClue.question}
           </div>
+          {phase === 'clue' && (
+            <div style={{ fontSize: '1.5rem', color: state.timerEnd ? '#aaa' : '#2ecc71' }}>
+              {state.timerEnd ? `Reading clue... ${timeLeft}s` : 'BUZZ OPEN!'}
+            </div>
+          )}
           {phase === 'answering' && activeTeam && (
             <div style={{ fontSize: '1.5rem', color: 'var(--jeopardy-gold)' }}>
               Answering: {activeTeam.name}

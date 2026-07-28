@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react';
 import socket from './socket';
 
-function formatTime(timerEnd) {
+function formatTime(timerEnd, now) {
   if (!timerEnd) return 0;
-  return Math.max(0, Math.ceil((timerEnd - Date.now()) / 1000));
+  return Math.max(0, Math.ceil((timerEnd - now) / 1000));
 }
 
 export default function Controller() {
@@ -17,12 +17,19 @@ export default function Controller() {
   const [newTeamName, setNewTeamName] = useState('');
   const [answer, setAnswer] = useState('');
   const [wager, setWager] = useState('');
+  const [now, setNow] = useState(Date.now());
 
   useEffect(() => {
     const onUpdate = (newState) => setState(newState);
     socket.on('stateUpdate', onUpdate);
     return () => socket.off('stateUpdate', onUpdate);
   }, []);
+
+  useEffect(() => {
+    if (!state?.timerEnd) return;
+    const interval = setInterval(() => setNow(Date.now()), 250);
+    return () => clearInterval(interval);
+  }, [state?.timerEnd]);
 
   const createRoom = () => {
     if (!name.trim()) return;
@@ -247,7 +254,10 @@ export default function Controller() {
   }
 
   if (state.phase === 'clue' && state.currentClue) {
-    const canBuzz = myTeam && !state.currentClue.answered && !state.buzzOrder?.includes(myTeam.id);
+    const readingTime = state.timerEnd && Date.now() < state.timerEnd;
+    const buzzOpen = !readingTime;
+    const canBuzz = myTeam && buzzOpen && !state.currentClue.answered && !state.buzzOrder?.includes(myTeam.id);
+    const buzzLabel = readingTime ? `Reading clue... ${formatTime(state.timerEnd, now)}s` : state.buzzOrder?.includes(myTeam?.id) ? 'Already buzzed' : 'BUZZ!';
     return (
       <div className="center column gap" style={{ height: '100%', padding: 24 }}>
         <div className="jeopardy-font" style={{ color: 'var(--jeopardy-gold)', fontSize: '1.3rem' }}>{state.currentClue.category}</div>
@@ -258,10 +268,14 @@ export default function Controller() {
             onClick={buzz}
             disabled={!canBuzz}
           >
-            {canBuzz ? 'BUZZ!' : 'Already buzzed'}
+            {buzzLabel}
           </button>
         )}
-        {isHost && <p className="text-center">Players are buzzing in...</p>}
+        {isHost && (
+          <p className="text-center" style={{ color: buzzOpen ? '#2ecc71' : '#aaa' }}>
+            {buzzOpen ? 'Buzzing is open!' : `Reading clue... ${formatTime(state.timerEnd, now)}s`}
+          </p>
+        )}
       </div>
     );
   }
@@ -300,7 +314,7 @@ export default function Controller() {
 
   if (state.phase === 'answering' && state.currentClue) {
     const isActive = myTeam?.id === state.activeTeamId;
-    const timeLeft = formatTime(state.timerEnd);
+    const timeLeft = formatTime(state.timerEnd, now);
     return (
       <div className="center column gap" style={{ height: '100%', padding: 24 }}>
         <div className="jeopardy-font" style={{ fontSize: '1.5rem', color: 'var(--jeopardy-gold)' }}>
@@ -314,7 +328,10 @@ export default function Controller() {
           </div>
         )}
         {isHost && (
-          <p className="text-center">Waiting for {state.teams.find((t) => t.id === state.activeTeamId)?.name} to answer...</p>
+          <div className="center column gap-sm" style={{ width: '100%', maxWidth: 360 }}>
+            <p className="text-center">Waiting for {state.teams.find((t) => t.id === state.activeTeamId)?.name} to answer...</p>
+            <button className="w-full" style={{ background: '#e74c3c' }} onClick={() => judge(false)}>Time's Up / No Answer</button>
+          </div>
         )}
         {!isHost && !isActive && <p className="text-center">Another team is answering...</p>}
       </div>
@@ -342,7 +359,7 @@ export default function Controller() {
   }
 
   if (state.phase === 'final') {
-    const timeLeft = formatTime(state.timerEnd);
+    const timeLeft = formatTime(state.timerEnd, now);
     return (
       <div className="center column gap" style={{ height: '100%', padding: 24 }}>
         <h2 className="jeopardy-font" style={{ color: 'var(--jeopardy-gold)' }}>FINAL JEOPARDY</h2>
