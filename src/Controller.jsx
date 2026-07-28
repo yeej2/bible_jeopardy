@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import socket from './socket';
+import { playBuzz, playCorrect, playWrong, playDailyDouble } from './audio';
 
 function formatTime(timerEnd, now) {
   if (!timerEnd) return 0;
@@ -18,6 +19,7 @@ export default function Controller() {
   const [answer, setAnswer] = useState('');
   const [wager, setWager] = useState('');
   const [now, setNow] = useState(Date.now());
+  const [showTeamPanel, setShowTeamPanel] = useState(false);
 
   useEffect(() => {
     const onUpdate = (newState) => setState(newState);
@@ -30,6 +32,13 @@ export default function Controller() {
     const interval = setInterval(() => setNow(Date.now()), 250);
     return () => clearInterval(interval);
   }, [state?.timerEnd]);
+
+  useEffect(() => {
+    if (localStorage.getItem('bj_sound') !== 'on') return;
+    if (state?.phase === 'dailydouble' && state?.currentClue?.isDailyDouble) {
+      playDailyDouble();
+    }
+  }, [state?.phase, state?.currentClue?.isDailyDouble]);
 
   const createRoom = () => {
     if (!name.trim()) return;
@@ -53,6 +62,10 @@ export default function Controller() {
         setPlayerId(res.playerId);
         setStep('lobby');
         setError('');
+        const savedTeamId = localStorage.getItem('bj_teamId');
+        if (savedTeamId) {
+          socket.emit('joinTeam', { roomCode, teamId: savedTeamId });
+        }
       } else {
         setError(res.error || 'Could not join room');
       }
@@ -66,6 +79,7 @@ export default function Controller() {
   };
 
   const handleJoinTeam = (teamId) => {
+    localStorage.setItem('bj_teamId', teamId);
     socket.emit('joinTeam', { roomCode, teamId });
   };
 
@@ -78,6 +92,7 @@ export default function Controller() {
   };
 
   const buzz = () => {
+    if (localStorage.getItem('bj_sound') === 'on') playBuzz();
     socket.emit('buzz', { roomCode });
   };
 
@@ -88,6 +103,9 @@ export default function Controller() {
   };
 
   const judge = (correct) => {
+    if (localStorage.getItem('bj_sound') === 'on') {
+      correct ? playCorrect() : playWrong();
+    }
     socket.emit('judgeAnswer', { roomCode, correct });
   };
 
@@ -241,7 +259,32 @@ export default function Controller() {
           <p className="text-center">Waiting for the host to pick a clue...</p>
         )}
         <div className="w-full" style={{ maxWidth: 360, marginTop: 'auto' }}>
-          <h3 style={{ color: 'var(--jeopardy-gold)' }}>Scores</h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <h3 style={{ color: 'var(--jeopardy-gold)' }}>Scores</h3>
+            {!isHost && (
+              <button style={{ padding: '6px 12px', fontSize: '0.85rem', background: '#333', color: '#fff' }} onClick={() => setShowTeamPanel(!showTeamPanel)}>
+                {showTeamPanel ? 'Hide Teams' : 'Change Team'}
+              </button>
+            )}
+          </div>
+          {showTeamPanel && !isHost && (
+            <div className="center column gap-sm" style={{ marginBottom: 12 }}>
+              <input placeholder="New team name" value={newTeamName} onChange={(e) => setNewTeamName(e.target.value)} />
+              <button className="w-full" style={{ padding: '8px 12px', fontSize: '0.9rem' }} onClick={handleCreateTeam}>Create Team</button>
+              {state.teams.map((team) => (
+                <div key={team.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: 8 }}>
+                  <span>{team.name} {team.id === myTeam?.id && '(You)'}</span>
+                  <button
+                    style={{ padding: '6px 12px', fontSize: '0.85rem', background: team.id === myTeam?.id ? '#555' : 'var(--jeopardy-gold)' }}
+                    onClick={() => handleJoinTeam(team.id)}
+                    disabled={team.id === myTeam?.id}
+                  >
+                    {team.id === myTeam?.id ? 'Joined' : 'Join'}
+                  </button>
+                </div>
+              ))}
+            </div>
+          )}
           {state.teams.map((team) => (
             <div key={team.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
               <span>{team.name} {team.id === myTeam?.id && '(You)'}</span>

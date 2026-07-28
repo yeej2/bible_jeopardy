@@ -1,5 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import socket from './socket';
+import { playBuzz, playCorrect, playWrong, playDailyDouble } from './audio';
 
 function formatTime(timerEnd) {
   if (!timerEnd) return null;
@@ -13,12 +14,25 @@ export default function Board() {
   const [state, setState] = useState(null);
   const [timeLeft, setTimeLeft] = useState(null);
   const [error, setError] = useState('');
+  const prevPhase = useRef(null);
 
   useEffect(() => {
     const onUpdate = (newState) => setState(newState);
     socket.on('stateUpdate', onUpdate);
     return () => socket.off('stateUpdate', onUpdate);
   }, []);
+
+  useEffect(() => {
+    if (localStorage.getItem('bj_sound') !== 'on') return;
+    const phase = state?.phase;
+    if (phase === 'answering' && prevPhase.current !== 'answering') {
+      playBuzz();
+    }
+    if (phase === 'dailydouble' && prevPhase.current !== 'dailydouble') {
+      playDailyDouble();
+    }
+    prevPhase.current = phase;
+  }, [state?.phase]);
 
   useEffect(() => {
     if (!state?.timerEnd) {

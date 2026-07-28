@@ -1,9 +1,22 @@
 import { useState } from 'react';
 import Board from './Board';
 import Controller from './Controller';
+import { startMusic, stopMusic } from './audio';
 
 function App() {
   const [mode, setMode] = useState(null); // 'board' | 'controller'
+  const [soundOn, setSoundOn] = useState(() => localStorage.getItem('bj_sound') === 'on');
+
+  const toggleSound = () => {
+    const next = !soundOn;
+    setSoundOn(next);
+    localStorage.setItem('bj_sound', next ? 'on' : 'off');
+    if (next) {
+      startMusic();
+    } else {
+      stopMusic();
+    }
+  };
 
   if (mode === 'board') {
     return <Board />;
@@ -27,6 +40,9 @@ function App() {
         </button>
         <button style={{ width: '100%', fontSize: '1.25rem' }} onClick={() => setMode('controller')}>
           Phone Controller
+        </button>
+        <button style={{ width: '100%', background: soundOn ? '#2ecc71' : '#333', color: '#fff' }} onClick={toggleSound}>
+          Sound & Music: {soundOn ? 'ON' : 'OFF'}
         </button>
       </div>
     </div>
