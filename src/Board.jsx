@@ -89,6 +89,20 @@ export default function Board() {
 
   return (
     <div style={{ height: '100%', display: 'flex', flexDirection: 'column', padding: 24 }}>
+      <div
+        style={{
+          position: 'fixed',
+          top: 16,
+          right: 24,
+          zIndex: 200,
+          fontSize: '1.2rem',
+          fontWeight: 700,
+          color: '#fff',
+          textShadow: '1px 1px 2px #000',
+        }}
+      >
+        ROOM: {state.code}
+      </div>
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
         <h1 className="jeopardy-font" style={{ fontSize: '2.5rem', color: 'var(--jeopardy-gold)', margin: 0 }}>
           BIBLE JEOPARDY
