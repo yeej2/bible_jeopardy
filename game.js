@@ -470,7 +470,7 @@ export function getPublicState(room, forHost = false, forTeamId = null) {
       isFinal: room.currentClue.isFinal,
       wager: room.currentClue.wager,
       submittedAnswer: forHost ? room.currentClue.submittedAnswer : undefined,
-      answer: (forHost || room.phase === 'final_judging') ? room.currentClue.answer : undefined,
+      answer: (forHost || room.phase === 'answer_revealed' || room.phase === 'final_judging') ? room.currentClue.answer : undefined,
       finalWagers: forHost ? room.currentClue.wagers : undefined,
       finalAnswers: forHost ? room.finalAnswers : undefined,
       myWager: !forHost && forTeamId ? (room.currentClue.wagers?.[forTeamId] ?? undefined) : undefined,
