@@ -234,12 +234,13 @@ export function judgeAnswer(room, correct) {
 
   // Reopen buzz to other teams not yet attempted
   const remaining = Array.from(room.teams.keys()).filter(
-    (t) => !room.attemptedTeams.has(t) && !room.buzzOrder.includes(t)
+    (t) => !room.attemptedTeams.has(t)
   );
   if (remaining.length > 0) {
     room.activeTeamId = null;
     room.phase = 'clue';
     room.timerEnd = null;
+    room.buzzOrder = [];
   } else {
     // All missed it
     room.activeTeamId = room.selectedByTeamId;
@@ -315,6 +316,38 @@ export function judgeFinalAnswer(room, teamId, correct) {
   }
   room.finalAnswers[teamId] = room.finalAnswers[teamId] || '';
   room.finalAnswers[teamId] += ' ✓';
+  return true;
+}
+
+export function adjustScore(room, teamId, delta) {
+  const team = room.teams.get(teamId);
+  if (!team) return false;
+  team.score += delta;
+  return true;
+}
+
+export function returnToBoard(room) {
+  if (!['clue', 'answering', 'judging', 'dailydouble'].includes(room.phase)) return false;
+  room.currentClue = null;
+  room.buzzOrder = [];
+  room.attemptedTeams = new Set();
+  room.timerEnd = null;
+  room.phase = 'board';
+  return true;
+}
+
+export function resetCurrentClue(room) {
+  if (!['clue', 'answering', 'judging', 'dailydouble'].includes(room.phase)) return false;
+  if (room.currentClue) {
+    const cat = room.board.categories[room.currentClue.categoryIndex];
+    const clue = cat?.clues[room.currentClue.clueIndex];
+    if (clue) clue.answered = false;
+  }
+  room.currentClue = null;
+  room.buzzOrder = [];
+  room.attemptedTeams = new Set();
+  room.timerEnd = null;
+  room.phase = 'board';
   return true;
 }
 

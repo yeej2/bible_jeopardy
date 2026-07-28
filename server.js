@@ -22,6 +22,9 @@ import {
   startFinalJeopardy,
   revealFinalAnswer,
   judgeFinalAnswer,
+  adjustScore,
+  returnToBoard,
+  resetCurrentClue,
   endGame,
   getPublicState,
 } from './game.js';
@@ -184,6 +187,30 @@ io.on('connection', (socket) => {
     const player = Array.from(room.players.values()).find((p) => p.socketId === socket.id);
     if (!player?.isHost) return;
     if (judgeFinalAnswer(room, teamId, correct)) broadcast(room);
+  });
+
+  socket.on('adjustScore', ({ roomCode, teamId, delta }) => {
+    const room = getRoom(roomCode.toUpperCase());
+    if (!room) return;
+    const player = Array.from(room.players.values()).find((p) => p.socketId === socket.id);
+    if (!player?.isHost) return;
+    if (adjustScore(room, teamId, delta)) broadcast(room);
+  });
+
+  socket.on('returnToBoard', ({ roomCode }) => {
+    const room = getRoom(roomCode.toUpperCase());
+    if (!room) return;
+    const player = Array.from(room.players.values()).find((p) => p.socketId === socket.id);
+    if (!player?.isHost) return;
+    if (returnToBoard(room)) broadcast(room);
+  });
+
+  socket.on('resetCurrentClue', ({ roomCode }) => {
+    const room = getRoom(roomCode.toUpperCase());
+    if (!room) return;
+    const player = Array.from(room.players.values()).find((p) => p.socketId === socket.id);
+    if (!player?.isHost) return;
+    if (resetCurrentClue(room)) broadcast(room);
   });
 
   socket.on('endGame', ({ roomCode }) => {

@@ -20,6 +20,9 @@ export default function Controller() {
   const [wager, setWager] = useState('');
   const [now, setNow] = useState(Date.now());
   const [showTeamPanel, setShowTeamPanel] = useState(false);
+  const [showHostControls, setShowHostControls] = useState(false);
+  const [scoreTeamId, setScoreTeamId] = useState('');
+  const [scoreAmount, setScoreAmount] = useState('');
 
   useEffect(() => {
     const onUpdate = (newState) => setState(newState);
@@ -136,6 +139,20 @@ export default function Controller() {
     socket.emit('endGame', { roomCode });
   };
 
+  const adjustTeamScore = (delta) => {
+    const amount = parseInt(scoreAmount, 10);
+    if (!scoreTeamId || Number.isNaN(amount) || amount <= 0) return;
+    socket.emit('adjustScore', { roomCode, teamId: scoreTeamId, delta: delta * amount });
+  };
+
+  const hostReturnToBoard = () => {
+    socket.emit('returnToBoard', { roomCode });
+  };
+
+  const hostResetCurrentClue = () => {
+    socket.emit('resetCurrentClue', { roomCode });
+  };
+
   if (step === 'menu') {
     return (
       <div className="center column gap" style={{ height: '100%', padding: 24 }}>
@@ -188,6 +205,40 @@ export default function Controller() {
 
   const myPlayer = state.players.find((p) => p.id === playerId);
   const myTeam = state.teams.find((t) => t.id === myPlayer?.teamId);
+
+  const renderHostControls = () => {
+    if (!isHost) return null;
+    const inClue = ['clue', 'answering', 'judging', 'dailydouble'].includes(state.phase);
+    return (
+      <div className="card" style={{ width: '100%', maxWidth: 360, marginTop: 'auto' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <h3 style={{ color: 'var(--jeopardy-gold)', margin: 0 }}>Host Controls</h3>
+          <button style={{ padding: '4px 10px', fontSize: '0.8rem', background: '#333', color: '#fff' }} onClick={() => setShowHostControls(!showHostControls)}>
+            {showHostControls ? 'Hide' : 'Show'}
+          </button>
+        </div>
+        {showHostControls && (
+          <div className="center column gap-sm">
+            <select value={scoreTeamId} onChange={(e) => setScoreTeamId(e.target.value)} style={{ width: '100%', padding: 8 }}>
+              <option value="">Select team...</option>
+              {state.teams.map((team) => (
+                <option key={team.id} value={team.id}>{team.name}</option>
+              ))}
+            </select>
+            <input type="number" placeholder="Amount" value={scoreAmount} onChange={(e) => setScoreAmount(e.target.value)} style={{ width: '100%', padding: 8 }} />
+            <div className="center gap-sm" style={{ width: '100%' }}>
+              <button className="w-full" style={{ background: '#2ecc71' }} onClick={() => adjustTeamScore(1)} disabled={!scoreTeamId || !scoreAmount}>+ Add</button>
+              <button className="w-full" style={{ background: '#e74c3c' }} onClick={() => adjustTeamScore(-1)} disabled={!scoreTeamId || !scoreAmount}>- Subtract</button>
+            </div>
+            <div className="center gap-sm" style={{ width: '100%' }}>
+              <button className="w-full" style={{ background: '#555' }} onClick={hostReturnToBoard} disabled={!inClue}>Back to Board</button>
+              <button className="w-full" style={{ background: '#555' }} onClick={hostResetCurrentClue} disabled={!inClue}>Reset Question</button>
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
 
   if (state.phase === 'lobby') {
     return (
@@ -292,6 +343,7 @@ export default function Controller() {
             </div>
           ))}
         </div>
+        {renderHostControls()}
       </div>
     );
   }
@@ -319,6 +371,7 @@ export default function Controller() {
             {buzzOpen ? 'Buzzing is open!' : 'Reading clue...'}
           </p>
         )}
+        {renderHostControls()}
       </div>
     );
   }
@@ -351,6 +404,7 @@ export default function Controller() {
           </>
         )}
         {!isHost && !isActive && <p className="text-center">{team?.name} is playing this Daily Double.</p>}
+        {renderHostControls()}
       </div>
     );
   }
@@ -377,6 +431,7 @@ export default function Controller() {
           </div>
         )}
         {!isHost && !isActive && <p className="text-center">Another team is answering...</p>}
+        {renderHostControls()}
       </div>
     );
   }
@@ -397,6 +452,7 @@ export default function Controller() {
           </div>
         )}
         {!isHost && <p className="text-center">Waiting for the host...</p>}
+        {renderHostControls()}
       </div>
     );
   }
@@ -451,6 +507,7 @@ export default function Controller() {
         {isHost && (
           <button className="w-full" style={{ maxWidth: 320, marginTop: 12 }} onClick={endGame}>End Game</button>
         )}
+        {renderHostControls()}
       </div>
     );
   }
@@ -471,6 +528,7 @@ export default function Controller() {
             New Game
           </button>
         )}
+        {renderHostControls()}
       </div>
     );
   }
