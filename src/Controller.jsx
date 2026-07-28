@@ -297,10 +297,10 @@ export default function Controller() {
   }
 
   if (state.phase === 'clue' && state.currentClue) {
-    const readingTime = state.timerEnd && Date.now() < state.timerEnd;
+    const readingTime = !!state.timerEnd;
     const buzzOpen = !readingTime;
     const canBuzz = myTeam && buzzOpen && !state.currentClue.answered && !state.buzzOrder?.includes(myTeam.id);
-    const buzzLabel = readingTime ? `Reading clue... ${formatTime(state.timerEnd, now)}s` : state.buzzOrder?.includes(myTeam?.id) ? 'Already buzzed' : 'BUZZ!';
+    const buzzLabel = readingTime ? 'Reading clue...' : state.buzzOrder?.includes(myTeam?.id) ? 'Already buzzed' : 'BUZZ!';
     return (
       <div className="center column gap" style={{ height: '100%', padding: 24 }}>
         <div className="jeopardy-font" style={{ color: 'var(--jeopardy-gold)', fontSize: '1.3rem' }}>{state.currentClue.category}</div>
@@ -316,7 +316,7 @@ export default function Controller() {
         )}
         {isHost && (
           <p className="text-center" style={{ color: buzzOpen ? '#2ecc71' : '#aaa' }}>
-            {buzzOpen ? 'Buzzing is open!' : `Reading clue... ${formatTime(state.timerEnd, now)}s`}
+            {buzzOpen ? 'Buzzing is open!' : 'Reading clue...'}
           </p>
         )}
       </div>
