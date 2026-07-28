@@ -160,43 +160,90 @@ export default function Board() {
       )}
 
       {(phase === 'clue' || phase === 'answering' || phase === 'judging' || phase === 'dailydouble') && currentClue && (
-        <div className="center column gap" style={{ flex: 1 }}>
-          <div className="jeopardy-font text-center" style={{ fontSize: '1.5rem', color: 'var(--jeopardy-gold)' }}>
-            {currentClue.category}
-            {currentClue.isDailyDouble && <span style={{ color: '#fff', marginLeft: 12 }}>DAILY DOUBLE</span>}
-          </div>
-          <div
-            className="jeopardy-font text-center"
-            style={{
-              fontSize: '2.8rem',
-              maxWidth: 900,
-              lineHeight: 1.3,
-              textShadow: '2px 2px 0 #000',
-            }}
-          >
-            {currentClue.question}
-          </div>
+        <div
+          className="center column gap"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            zIndex: 100,
+            background: 'var(--jeopardy-blue)',
+            padding: 24,
+          }}
+        >
           {phase === 'clue' && (
-            <div style={{ fontSize: '1.5rem', color: state.timerEnd ? '#aaa' : '#2ecc71' }}>
-              {state.timerEnd ? `Reading clue... ${timeLeft}s` : 'BUZZ OPEN!'}
-            </div>
+            <>
+              <div className="jeopardy-font text-center" style={{ fontSize: '1.5rem', color: 'var(--jeopardy-gold)' }}>
+                {currentClue.category}
+              </div>
+              <div
+                className="jeopardy-font text-center"
+                style={{
+                  fontSize: '2.8rem',
+                  maxWidth: 900,
+                  lineHeight: 1.3,
+                  textShadow: '2px 2px 0 #000',
+                }}
+              >
+                {currentClue.question}
+              </div>
+              <div style={{ fontSize: '1.5rem', color: state.timerEnd ? '#aaa' : '#2ecc71' }}>
+                {state.timerEnd ? `Reading clue... ${timeLeft}s` : 'BUZZ OPEN!'}
+              </div>
+            </>
           )}
           {phase === 'answering' && activeTeam && (
-            <div style={{ fontSize: '1.5rem', color: 'var(--jeopardy-gold)' }}>
-              Answering: {activeTeam.name}
+            <div className="center column gap" style={{ color: 'var(--jeopardy-gold)' }}>
+              <div className="jeopardy-font" style={{ fontSize: '3rem' }}>
+                {activeTeam.name}
+              </div>
+              <div style={{ fontSize: '1.8rem' }}>is answering</div>
+              {timeLeft !== null && <div style={{ fontSize: '2.5rem' }}>{timeLeft}s</div>}
             </div>
           )}
           {phase === 'judging' && (
-            <div style={{ fontSize: '1.3rem' }}>Host is judging the answer...</div>
+            <div className="center column gap" style={{ color: 'var(--jeopardy-gold)' }}>
+              <div className="jeopardy-font" style={{ fontSize: '2.5rem' }}>Host is judging</div>
+              <div style={{ fontSize: '1.5rem' }}>The answer is hidden from the board</div>
+            </div>
           )}
           {phase === 'dailydouble' && (
-            <div style={{ fontSize: '1.3rem', color: 'var(--jeopardy-gold)' }}>Wager set — answering now</div>
+            <>
+              <div className="jeopardy-font text-center" style={{ fontSize: '2.5rem', color: '#fff' }}>DAILY DOUBLE</div>
+              <div className="jeopardy-font text-center" style={{ fontSize: '1.5rem', color: 'var(--jeopardy-gold)' }}>
+                {currentClue.category}
+              </div>
+              <div
+                className="jeopardy-font text-center"
+                style={{
+                  fontSize: '2.8rem',
+                  maxWidth: 900,
+                  lineHeight: 1.3,
+                }}
+              >
+                {currentClue.question}
+              </div>
+            </>
           )}
         </div>
       )}
 
       {(phase === 'final' || phase === 'final_judging') && currentClue && (
-        <div className="center column gap" style={{ flex: 1 }}>
+        <div
+          className="center column gap"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100%',
+            height: '100%',
+            zIndex: 100,
+            background: 'var(--jeopardy-blue)',
+            padding: 24,
+          }}
+        >
           <h2 className="jeopardy-font" style={{ fontSize: '2.5rem', color: 'var(--jeopardy-gold)' }}>
             FINAL JEOPARDY
           </h2>
