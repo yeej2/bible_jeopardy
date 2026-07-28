@@ -1,0 +1,88 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  --jeopardy-blue: #060ce9;
+  --jeopardy-gold: #d69f4e;
+  --jeopardy-text: #fff;
+  --bg-dark: #000;
+}
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: var(--bg-dark);
+  color: var(--jeopardy-text);
+  font-family: 'Roboto', sans-serif;
+}
+
+.jeopardy-font {
+  font-family: 'Bebas Neue', sans-serif;
+  letter-spacing: 0.04em;
+}
+
+button {
+  cursor: pointer;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 20px;
+  font-size: 1rem;
+  font-weight: 700;
+  background: var(--jeopardy-gold);
+  color: #000;
+  transition: transform 0.1s ease, opacity 0.2s ease;
+}
+
+button:hover:not(:disabled) {
+  opacity: 0.9;
+}
+
+button:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+input {
+  padding: 12px;
+  border-radius: 8px;
+  border: 2px solid var(--jeopardy-gold);
+  background: #111;
+  color: #fff;
+  font-size: 1rem;
+  width: 100%;
+}
+
+input:focus {
+  outline: none;
+  border-color: #fff;
+}
+
+.card {
+  background: #111;
+  border: 2px solid var(--jeopardy-gold);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.column {
+  flex-direction: column;
+}
+
+.gap-sm { gap: 8px; }
+.gap { gap: 16px; }
+.gap-lg { gap: 24px; }
+
+.w-full { width: 100%; }
+.text-center { text-align: center; }
