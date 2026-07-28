@@ -112,6 +112,18 @@ export default function Controller() {
     socket.emit('judgeAnswer', { roomCode, correct });
   };
 
+  const timeout = () => {
+    socket.emit('timeoutAnswer', { roomCode });
+  };
+
+  const nextQuestion = () => {
+    socket.emit('nextQuestion', { roomCode });
+  };
+
+  const releaseFinalQuestion = () => {
+    socket.emit('releaseFinalQuestion', { roomCode });
+  };
+
   const submitWager = () => {
     const amount = parseInt(wager, 10);
     if (Number.isNaN(amount) || amount < 0) return;
@@ -208,7 +220,7 @@ export default function Controller() {
 
   const renderHostControls = () => {
     if (!isHost) return null;
-    const inClue = ['clue', 'answering', 'judging', 'dailydouble'].includes(state.phase);
+    const inClue = ['clue', 'answering', 'judging', 'dailydouble', 'answer_revealed'].includes(state.phase);
     return (
       <div className="card" style={{ width: '100%', maxWidth: 360, marginTop: 'auto' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
@@ -349,10 +361,8 @@ export default function Controller() {
   }
 
   if (state.phase === 'clue' && state.currentClue) {
-    const readingTime = !!state.timerEnd;
-    const buzzOpen = !readingTime;
-    const canBuzz = myTeam && buzzOpen && !state.currentClue.answered && !state.buzzOrder?.includes(myTeam.id);
-    const buzzLabel = readingTime ? 'Reading clue...' : state.buzzOrder?.includes(myTeam?.id) ? 'Already buzzed' : 'BUZZ!';
+    const canBuzz = myTeam && !state.currentClue.answered && !state.buzzOrder?.includes(myTeam.id);
+    const buzzLabel = state.buzzOrder?.includes(myTeam?.id) ? 'Already buzzed' : 'BUZZ!';
     return (
       <div className="center column gap" style={{ height: '100%', padding: 24 }}>
         <div className="jeopardy-font" style={{ color: 'var(--jeopardy-gold)', fontSize: '1.3rem' }}>{state.currentClue.category}</div>
@@ -367,8 +377,8 @@ export default function Controller() {
           </button>
         )}
         {isHost && (
-          <p className="text-center" style={{ color: buzzOpen ? '#2ecc71' : '#aaa' }}>
-            {buzzOpen ? 'Buzzing is open!' : 'Reading clue...'}
+          <p className="text-center" style={{ color: '#2ecc71' }}>
+            Buzzing is open!
           </p>
         )}
         {renderHostControls()}
@@ -427,7 +437,10 @@ export default function Controller() {
         {isHost && (
           <div className="center column gap-sm" style={{ width: '100%', maxWidth: 360 }}>
             <p className="text-center">Waiting for {state.teams.find((t) => t.id === state.activeTeamId)?.name} to answer...</p>
-            <button className="w-full" style={{ background: '#e74c3c' }} onClick={() => judge(false)}>Time's Up / No Answer</button>
+            <div className="center gap" style={{ flexWrap: 'wrap' }}>
+              <button style={{ background: '#2ecc71' }} onClick={() => judge(true)}>Correct</button>
+              <button style={{ background: '#e74c3c' }} onClick={timeout}>Time's Up / No Answer</button>
+            </div>
           </div>
         )}
         {!isHost && !isActive && <p className="text-center">Another team is answering...</p>}
@@ -457,29 +470,69 @@ export default function Controller() {
     );
   }
 
-  if (state.phase === 'final') {
-    const timeLeft = formatTime(state.timerEnd, now);
+  if (state.phase === 'answer_revealed' && state.currentClue) {
+    return (
+      <div className="center column gap" style={{ height: '100%', padding: 24 }}>
+        <div className="jeopardy-font" style={{ fontSize: '1.5rem', color: 'var(--jeopardy-gold)' }}>
+          Answer Revealed
+        </div>
+        <p className="text-center" style={{ fontSize: '1.1rem' }}>
+          Correct answer: <strong>{state.currentClue.answer}</strong>
+        </p>
+        {isHost && (
+          <button className="w-full" style={{ maxWidth: 360 }} onClick={nextQuestion}>Next Question</button>
+        )}
+        {!isHost && <p className="text-center">Waiting for the host...</p>}
+        {renderHostControls()}
+      </div>
+    );
+  }
+
+  if (state.phase === 'final_wager' || state.phase === 'final_question') {
+    const allWagersIn = isHost && state.currentClue.finalWagers && Object.keys(state.currentClue.finalWagers).length === state.teams.length;
     return (
       <div className="center column gap" style={{ height: '100%', padding: 24 }}>
         <h2 className="jeopardy-font" style={{ color: 'var(--jeopardy-gold)' }}>FINAL JEOPARDY</h2>
         <div style={{ fontSize: '1.2rem' }}>Category: {state.currentClue.category}</div>
-        <p className="text-center" style={{ fontSize: '1.1rem' }}>{state.currentClue.question}</p>
-        <div style={{ fontSize: '1.5rem' }}>{timeLeft}s</div>
-        {myTeam && !state.currentClue.wagers?.[myTeam.id] && (
+        {state.phase === 'final_question' && (
+          <p className="text-center" style={{ fontSize: '1.1rem' }}>{state.currentClue.question}</p>
+        )}
+        {state.phase === 'final_wager' && myTeam && (
           <div className="center column gap-sm" style={{ width: '100%', maxWidth: 320 }}>
+            <p>Your current wager: ${state.currentClue.myWager ?? 0}</p>
             <input type="number" placeholder={`Wager (max $${myTeam.score})`} value={wager} onChange={(e) => setWager(e.target.value)} />
             <button className="w-full" onClick={submitWager}>Submit Wager</button>
           </div>
         )}
-        {myTeam && state.currentClue.wagers?.[myTeam.id] && !state.finalAnswers?.[myTeam.id] && (
+        {state.phase === 'final_question' && myTeam && (
           <div className="center column gap-sm" style={{ width: '100%', maxWidth: 320 }}>
             <input placeholder="Your answer" value={answer} onChange={(e) => setAnswer(e.target.value)} />
             <button className="w-full" onClick={submitAnswer}>Submit Answer</button>
           </div>
         )}
-        {isHost && (
-          <button className="w-full" style={{ maxWidth: 320 }} onClick={revealFinalAnswer}>Reveal & Judge Answers</button>
+        {state.phase === 'final_wager' && isHost && (
+          <div className="center column gap-sm" style={{ width: '100%', maxWidth: 420 }}>
+            {state.teams.map((team) => (
+              <div key={team.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', padding: 8 }}>
+                <span>{team.name}</span>
+                <span>{state.currentClue.finalWagers?.[team.id] !== undefined ? 'Wager locked' : 'No wager yet'}</span>
+              </div>
+            ))}
+            <button className="w-full" onClick={releaseFinalQuestion} disabled={!allWagersIn}>Release Question</button>
+          </div>
         )}
+        {state.phase === 'final_question' && isHost && (
+          <div className="center column gap-sm" style={{ width: '100%', maxWidth: 420 }}>
+            {state.teams.map((team) => (
+              <div key={team.id} className="card" style={{ display: 'flex', justifyContent: 'space-between', padding: 8 }}>
+                <span>{team.name}</span>
+                <span>{state.currentClue.finalAnswers?.[team.id] ? 'Answered' : 'Not answered'}</span>
+              </div>
+            ))}
+            <button className="w-full" onClick={revealFinalAnswer}>Reveal Answer</button>
+          </div>
+        )}
+        {renderHostControls()}
       </div>
     );
   }
@@ -514,9 +567,19 @@ export default function Controller() {
 
   if (state.phase === 'gameover') {
     const sorted = [...state.teams].sort((a, b) => b.score - a.score);
+    const winner = sorted[0];
     return (
       <div className="center column gap" style={{ height: '100%', padding: 24 }}>
-        <h2 className="jeopardy-font" style={{ fontSize: '2rem', color: 'var(--jeopardy-gold)' }}>GAME OVER</h2>
+        <h2 className="jeopardy-font" style={{ fontSize: '2.5rem', color: 'var(--jeopardy-gold)' }}>FINAL RESULTS</h2>
+        {winner && (
+          <div className="text-center" style={{ marginBottom: 12 }}>
+            <div className="jeopardy-font" style={{ fontSize: '2rem', color: '#2ecc71' }}>
+              {winner.name} wins!
+            </div>
+            <div style={{ fontSize: '1.2rem', color: '#fff' }}>with ${winner.score}</div>
+          </div>
+        )}
+        <h3 style={{ color: 'var(--jeopardy-gold)', marginBottom: 0 }}>Standings</h3>
         {sorted.map((team, idx) => (
           <div key={team.id} className="card" style={{ width: '100%', maxWidth: 360, display: 'flex', justifyContent: 'space-between' }}>
             <span>#{idx + 1} {team.name}</span>

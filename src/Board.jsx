@@ -159,7 +159,7 @@ export default function Board() {
         </div>
       )}
 
-      {(phase === 'clue' || phase === 'answering' || phase === 'judging' || phase === 'dailydouble') && currentClue && (
+      {(phase === 'clue' || phase === 'answering' || phase === 'judging' || phase === 'dailydouble' || phase === 'answer_revealed') && currentClue && (
         <div
           className="center column gap"
           style={{
@@ -189,8 +189,8 @@ export default function Board() {
               >
                 {currentClue.question}
               </div>
-              <div style={{ fontSize: '1.5rem', color: state.timerEnd ? '#aaa' : '#2ecc71' }}>
-                {state.timerEnd ? `Reading clue... ${timeLeft}s` : 'BUZZ OPEN!'}
+              <div style={{ fontSize: '1.5rem', color: '#2ecc71' }}>
+                BUZZ OPEN!
               </div>
             </>
           )}
@@ -207,6 +207,14 @@ export default function Board() {
             <div className="center column gap" style={{ color: 'var(--jeopardy-gold)' }}>
               <div className="jeopardy-font" style={{ fontSize: '2.5rem' }}>Host is judging</div>
               <div style={{ fontSize: '1.5rem' }}>The answer is hidden from the board</div>
+            </div>
+          )}
+          {phase === 'answer_revealed' && (
+            <div className="center column gap" style={{ color: 'var(--jeopardy-gold)' }}>
+              <div className="jeopardy-font" style={{ fontSize: '2.5rem' }}>The Answer</div>
+              <div className="jeopardy-font text-center" style={{ fontSize: '2.2rem', maxWidth: 900, lineHeight: 1.3 }}>
+                {currentClue.answer}
+              </div>
             </div>
           )}
           {phase === 'dailydouble' && (
@@ -230,7 +238,7 @@ export default function Board() {
         </div>
       )}
 
-      {(phase === 'final' || phase === 'final_judging') && currentClue && (
+      {(phase === 'final_wager' || phase === 'final_question' || phase === 'final_judging') && currentClue && (
         <div
           className="center column gap"
           style={{
@@ -248,18 +256,44 @@ export default function Board() {
             FINAL JEOPARDY
           </h2>
           <div className="jeopardy-font text-center" style={{ fontSize: '1.5rem' }}>{currentClue.category}</div>
-          <div className="jeopardy-font text-center" style={{ fontSize: '2.5rem', maxWidth: 900, lineHeight: 1.3 }}>
-            {currentClue.question}
-          </div>
-          {phase === 'final_judging' && (
-            <div style={{ fontSize: '1.3rem' }}>Host is judging final answers...</div>
+          {(phase === 'final_question' || phase === 'final_judging') && (
+            <div className="jeopardy-font text-center" style={{ fontSize: '2.5rem', maxWidth: 900, lineHeight: 1.3 }}>
+              {currentClue.question}
+            </div>
+          )}
+          {phase === 'final_wager' && (
+            <div style={{ fontSize: '1.5rem' }}>Teams are submitting wagers...</div>
+          )}
+          {phase === 'final_question' && (
+            <div style={{ fontSize: '1.5rem' }}>Teams are writing answers...</div>
+          )}
+          {phase === 'final_judging' && currentClue.answer && (
+            <div className="center column gap">
+              <div style={{ fontSize: '1.3rem' }}>Correct answer:</div>
+              <div className="jeopardy-font text-center" style={{ fontSize: '2.2rem', maxWidth: 900, lineHeight: 1.3 }}>
+                {currentClue.answer}
+              </div>
+            </div>
           )}
         </div>
       )}
 
       {phase === 'gameover' && (
         <div className="center column gap" style={{ flex: 1 }}>
-          <h2 className="jeopardy-font" style={{ fontSize: '3rem', color: 'var(--jeopardy-gold)' }}>GAME OVER</h2>
+          <h2 className="jeopardy-font" style={{ fontSize: '3rem', color: 'var(--jeopardy-gold)' }}>FINAL RESULTS</h2>
+          {(() => {
+            const sorted = teams?.sort((a, b) => b.score - a.score);
+            const winner = sorted[0];
+            return winner ? (
+              <div className="center column gap" style={{ marginBottom: 24 }}>
+                <div className="jeopardy-font" style={{ fontSize: '3.5rem', color: '#2ecc71' }}>
+                  {winner.name} wins!
+                </div>
+                <div style={{ fontSize: '1.5rem' }}>with ${winner.score}</div>
+              </div>
+            ) : null;
+          })()}
+          <h3 className="jeopardy-font" style={{ color: 'var(--jeopardy-gold)' }}>Standings</h3>
           <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', justifyContent: 'center' }}>
             {teams?.sort((a, b) => b.score - a.score).map((team, idx) => (
               <div key={team.id} className="card text-center" style={{ minWidth: 180 }}>

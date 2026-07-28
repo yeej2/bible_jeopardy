@@ -166,8 +166,7 @@ export function selectClue(room, teamId, categoryIndex, clueIndex) {
     room.activeTeamId = teamId;
   } else {
     room.phase = 'clue';
-    // Start a short reading period then open buzzes
-    room.timerEnd = Date.now() + 4000;
+    room.timerEnd = null;
   }
   return true;
 }
@@ -179,9 +178,6 @@ export function buzz(room, playerId) {
   if (room.buzzOrder.includes(player.teamId)) return false;
   if (room.attemptedTeams.has(player.teamId)) return false;
 
-  // Only allow buzz after reading period
-  if (room.timerEnd && Date.now() < room.timerEnd) return false;
-
   room.buzzOrder.push(player.teamId);
   if (room.buzzOrder.length === 1) {
     room.activeTeamId = player.teamId;
@@ -192,9 +188,9 @@ export function buzz(room, playerId) {
 }
 
 export function submitAnswer(room, teamId, answer) {
-  if (room.phase !== 'answering' && room.phase !== 'dailydouble' && room.phase !== 'final') return false;
+  if (room.phase !== 'answering' && room.phase !== 'dailydouble' && room.phase !== 'final_question') return false;
   if (room.phase === 'dailydouble' && room.activeTeamId !== teamId) return false;
-  if (room.phase === 'final') {
+  if (room.phase === 'final_question') {
     room.finalAnswers[teamId] = answer;
     return true;
   }
@@ -205,7 +201,7 @@ export function submitAnswer(room, teamId, answer) {
 }
 
 export function judgeAnswer(room, correct) {
-  if (room.phase !== 'judging' && room.phase !== 'dailydouble' && room.phase !== 'final') return false;
+  if (room.phase !== 'judging' && room.phase !== 'dailydouble') return false;
   const clue = room.currentClue;
   const teamId = room.phase === 'dailydouble' ? room.activeTeamId : clue.answeringTeamId;
   const team = room.teams.get(teamId);
@@ -214,10 +210,8 @@ export function judgeAnswer(room, correct) {
   if (correct) {
     team.score += value;
     room.activeTeamId = teamId;
-    room.attemptedTeams = new Set();
-    room.buzzOrder = [];
-    room.currentClue = null;
-    room.phase = 'board';
+    room.phase = 'answer_revealed';
+    room.timerEnd = null;
     checkRoundComplete(room);
     return true;
   }
@@ -226,9 +220,9 @@ export function judgeAnswer(room, correct) {
   room.attemptedTeams.add(teamId);
 
   if (room.phase === 'dailydouble') {
-    room.currentClue = null;
-    room.phase = 'board';
-    checkRoundComplete(room);
+    room.activeTeamId = room.selectedByTeamId;
+    room.phase = 'answer_revealed';
+    room.timerEnd = null;
     return true;
   }
 
@@ -244,9 +238,8 @@ export function judgeAnswer(room, correct) {
   } else {
     // All missed it
     room.activeTeamId = room.selectedByTeamId;
-    room.currentClue = null;
-    room.phase = 'board';
-    checkRoundComplete(room);
+    room.phase = 'answer_revealed';
+    room.timerEnd = null;
   }
   return true;
 }
@@ -262,7 +255,7 @@ export function submitWager(room, teamId, amount) {
     // Move to answering after a moment handled by client/host
     return true;
   }
-  if (room.phase === 'final') {
+  if (room.phase === 'final_wager') {
     const team = room.teams.get(teamId);
     const maxWager = Math.max(0, team.score);
     const wager = Math.max(0, Math.min(amount, maxWager));
@@ -283,7 +276,7 @@ export function startDailyDoubleAnswer(room) {
 
 export function startFinalJeopardy(room) {
   if (room.phase !== 'board') return false;
-  room.phase = 'final';
+  room.phase = 'final_wager';
   const fj = room.rounds[room.rounds.length - 1];
   room.currentClue = {
     question: fj.question,
@@ -294,12 +287,20 @@ export function startFinalJeopardy(room) {
   };
   room.finalWagers = {};
   room.finalAnswers = {};
-  room.timerEnd = Date.now() + 30000; // 30s for wager+answer
+  room.finalRevealed = false;
+  room.timerEnd = null;
+  return true;
+}
+
+export function releaseFinalQuestion(room) {
+  if (room.phase !== 'final_wager') return false;
+  room.phase = 'final_question';
+  room.timerEnd = null;
   return true;
 }
 
 export function revealFinalAnswer(room) {
-  if (room.phase !== 'final') return false;
+  if (room.phase !== 'final_question' && room.phase !== 'final') return false;
   room.finalRevealed = true;
   room.phase = 'final_judging';
   return true;
@@ -316,6 +317,35 @@ export function judgeFinalAnswer(room, teamId, correct) {
   }
   room.finalAnswers[teamId] = room.finalAnswers[teamId] || '';
   room.finalAnswers[teamId] += ' ✓';
+  return true;
+}
+
+export function timeoutAnswer(room) {
+  if (room.phase !== 'answering' && room.phase !== 'dailydouble') return false;
+  const teamId = room.activeTeamId;
+  const team = room.teams.get(teamId);
+  const clue = room.currentClue;
+  if (!team || !clue) return false;
+  const value = clue.wager || clue.value;
+  team.score -= value;
+  room.currentClue = null;
+  room.buzzOrder = [];
+  room.attemptedTeams = new Set();
+  room.timerEnd = null;
+  room.phase = 'board';
+  room.activeTeamId = room.selectedByTeamId;
+  checkRoundComplete(room);
+  return true;
+}
+
+export function nextQuestion(room) {
+  if (room.phase !== 'answer_revealed') return false;
+  room.currentClue = null;
+  room.buzzOrder = [];
+  room.attemptedTeams = new Set();
+  room.timerEnd = null;
+  room.phase = 'board';
+  checkRoundComplete(room);
   return true;
 }
 
@@ -371,7 +401,7 @@ function checkRoundComplete(room) {
   }
 }
 
-export function getPublicState(room, forHost = false) {
+export function getPublicState(room, forHost = false, forTeamId = null) {
   const teams = [];
   for (const [id, team] of room.teams.entries()) {
     const members = team.members
@@ -410,9 +440,10 @@ export function getPublicState(room, forHost = false) {
       isFinal: room.currentClue.isFinal,
       wager: room.currentClue.wager,
       submittedAnswer: forHost ? room.currentClue.submittedAnswer : undefined,
-      answer: forHost ? room.currentClue.answer : undefined,
+      answer: (forHost || room.phase === 'final_judging') ? room.currentClue.answer : undefined,
       finalWagers: forHost ? room.currentClue.wagers : undefined,
       finalAnswers: forHost ? room.finalAnswers : undefined,
+      myWager: !forHost && forTeamId ? (room.currentClue.wagers?.[forTeamId] ?? undefined) : undefined,
     } : null,
     timerEnd: room.timerEnd,
     selectedByTeamId: room.selectedByTeamId,

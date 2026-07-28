@@ -25,6 +25,9 @@ import {
   adjustScore,
   returnToBoard,
   resetCurrentClue,
+  timeoutAnswer,
+  nextQuestion,
+  releaseFinalQuestion,
   endGame,
   getPublicState,
 } from './game.js';
@@ -50,12 +53,11 @@ app.get('*', (_req, res) => {
 });
 
 function broadcast(room) {
-  const state = getPublicState(room, false);
-  const hostState = getPublicState(room, true);
   for (const [id, player] of room.players.entries()) {
     const socket = io.sockets.sockets.get(player.socketId);
     if (socket) {
-      socket.emit('stateUpdate', player.isHost ? hostState : state);
+      const state = getPublicState(room, player.isHost, player.teamId);
+      socket.emit('stateUpdate', state);
     }
   }
 }
@@ -114,14 +116,6 @@ io.on('connection', (socket) => {
     if (!player?.isHost) return;
     if (selectClue(room, room.activeTeamId, categoryIndex, clueIndex)) {
       broadcast(room);
-      // Auto-open buzz after reading period
-      const delay = room.currentClue?.isDailyDouble ? 0 : 4000;
-      setTimeout(() => {
-        if (room.phase === 'clue') {
-          room.timerEnd = null;
-          broadcast(room);
-        }
-      }, delay);
     }
   });
 
@@ -149,6 +143,22 @@ io.on('connection', (socket) => {
     if (judgeAnswer(room, correct)) broadcast(room);
   });
 
+  socket.on('timeoutAnswer', ({ roomCode }) => {
+    const room = getRoom(roomCode.toUpperCase());
+    if (!room) return;
+    const player = Array.from(room.players.values()).find((p) => p.socketId === socket.id);
+    if (!player?.isHost) return;
+    if (timeoutAnswer(room)) broadcast(room);
+  });
+
+  socket.on('nextQuestion', ({ roomCode }) => {
+    const room = getRoom(roomCode.toUpperCase());
+    if (!room) return;
+    const player = Array.from(room.players.values()).find((p) => p.socketId === socket.id);
+    if (!player?.isHost) return;
+    if (nextQuestion(room)) broadcast(room);
+  });
+
   socket.on('submitWager', ({ roomCode, amount }) => {
     const room = getRoom(roomCode.toUpperCase());
     if (!room) return;
@@ -171,6 +181,14 @@ io.on('connection', (socket) => {
     const player = Array.from(room.players.values()).find((p) => p.socketId === socket.id);
     if (!player?.isHost) return;
     if (startFinalJeopardy(room)) broadcast(room);
+  });
+
+  socket.on('releaseFinalQuestion', ({ roomCode }) => {
+    const room = getRoom(roomCode.toUpperCase());
+    if (!room) return;
+    const player = Array.from(room.players.values()).find((p) => p.socketId === socket.id);
+    if (!player?.isHost) return;
+    if (releaseFinalQuestion(room)) broadcast(room);
   });
 
   socket.on('revealFinalAnswer', ({ roomCode }) => {
