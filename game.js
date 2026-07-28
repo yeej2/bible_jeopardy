@@ -67,6 +67,8 @@ export function createRoom(hostSocketId, hostName) {
     rounds: defaultRounds,
     selectedByTeamId: null,
     finalRevealed: false,
+    buzzes: [],
+    clueStartTime: null,
   };
   rooms.set(code, room);
   return { room, hostId };
@@ -146,6 +148,8 @@ export function startGame(room) {
   room.timerEnd = null;
   room.selectedByTeamId = null;
   room.finalRevealed = false;
+  room.buzzes = [];
+  room.clueStartTime = null;
   return true;
 }
 
@@ -160,6 +164,7 @@ export function selectClue(room, teamId, categoryIndex, clueIndex) {
   room.selectedByTeamId = teamId;
   room.buzzOrder = [];
   room.attemptedTeams = new Set();
+  room.clueStartTime = Date.now();
 
   if (clue.isDailyDouble) {
     room.phase = 'dailydouble';
@@ -179,6 +184,10 @@ export function buzz(room, playerId) {
   if (room.attemptedTeams.has(player.teamId)) return false;
 
   room.buzzOrder.push(player.teamId);
+  room.buzzes.push({
+    teamId: player.teamId,
+    time: Date.now() - (room.clueStartTime || Date.now()),
+  });
   if (room.buzzOrder.length === 1) {
     room.activeTeamId = player.teamId;
     room.phase = 'answering';
@@ -235,6 +244,7 @@ export function judgeAnswer(room, correct) {
     room.phase = 'clue';
     room.timerEnd = null;
     room.buzzOrder = [];
+    room.clueStartTime = Date.now();
   } else {
     // All missed it
     room.activeTeamId = room.selectedByTeamId;
@@ -360,6 +370,7 @@ export function timeoutAnswer(room) {
     room.phase = 'clue';
     room.timerEnd = null;
     room.buzzOrder = [];
+    room.clueStartTime = Date.now();
   } else {
     room.activeTeamId = room.selectedByTeamId;
     room.phase = 'answer_revealed';
@@ -431,6 +442,33 @@ function checkRoundComplete(room) {
   }
 }
 
+function getFastestBuzz(buzzes, teams) {
+  if (!buzzes.length) return null;
+  const fastest = [...buzzes].sort((a, b) => a.time - b.time)[0];
+  const team = teams.get(fastest.teamId);
+  return {
+    teamId: fastest.teamId,
+    teamName: team?.name || 'Unknown',
+    time: fastest.time,
+  };
+}
+
+function getMostBuzzes(buzzes, teams) {
+  const counts = {};
+  for (const b of buzzes) {
+    counts[b.teamId] = (counts[b.teamId] || 0) + 1;
+  }
+  const entries = Object.entries(counts).sort((a, b) => b[1] - a[1]);
+  if (!entries.length) return null;
+  const [teamId, count] = entries[0];
+  const team = teams.get(teamId);
+  return {
+    teamId,
+    teamName: team?.name || 'Unknown',
+    count,
+  };
+}
+
 export function getPublicState(room, forHost = false, forTeamId = null) {
   const teams = [];
   for (const [id, team] of room.teams.entries()) {
@@ -478,6 +516,10 @@ export function getPublicState(room, forHost = false, forTeamId = null) {
     timerEnd: room.timerEnd,
     selectedByTeamId: room.selectedByTeamId,
     finalRevealed: room.finalRevealed,
+    stats: {
+      fastestBuzz: getFastestBuzz(room.buzzes, room.teams),
+      mostBuzzes: getMostBuzzes(room.buzzes, room.teams),
+    },
   };
 
   return state;

@@ -564,7 +564,7 @@ export default function Controller() {
           <div key={team.id} className="card" style={{ width: '100%', maxWidth: 420, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <div>
               <strong>{team.name}</strong>
-              <div style={{ fontSize: '0.9rem' }}>Wager: ${state.currentClue.wagers?.[team.id] ?? 0}</div>
+              <div style={{ fontSize: '0.9rem' }}>Wager: ${state.currentClue.finalWagers?.[team.id] ?? 0}</div>
               <div style={{ fontSize: '0.9rem' }}>Answer: {state.finalAnswers?.[team.id] || '—'}</div>
             </div>
             <div className="center gap-sm">
@@ -594,6 +594,22 @@ export default function Controller() {
               {winner.name} wins!
             </div>
             <div style={{ fontSize: '1.2rem', color: '#fff' }}>with ${winner.score}</div>
+            {winner.members && winner.members.length > 0 && (
+              <div style={{ fontSize: '1rem', color: '#aaa', marginTop: 4 }}>
+                Team: {winner.members.join(', ')}
+              </div>
+            )}
+          </div>
+        )}
+        <h3 style={{ color: 'var(--jeopardy-gold)', marginBottom: 0 }}>Game Stats</h3>
+        {state.stats?.fastestBuzz && (
+          <div className="card" style={{ width: '100%', maxWidth: 360, textAlign: 'center' }}>
+            <strong>Fastest Buzz:</strong> {state.stats.fastestBuzz.teamName} ({(state.stats.fastestBuzz.time / 1000).toFixed(2)}s)
+          </div>
+        )}
+        {state.stats?.mostBuzzes && (
+          <div className="card" style={{ width: '100%', maxWidth: 360, textAlign: 'center' }}>
+            <strong>Most Buzz-ins:</strong> {state.stats.mostBuzzes.teamName} ({state.stats.mostBuzzes.count})
           </div>
         )}
         <h3 style={{ color: 'var(--jeopardy-gold)', marginBottom: 0 }}>Standings</h3>

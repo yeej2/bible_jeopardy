@@ -304,9 +304,31 @@ export default function Board() {
                   {winner.name} wins!
                 </div>
                 <div style={{ fontSize: '1.5rem' }}>with ${winner.score}</div>
+                {winner.members && winner.members.length > 0 && (
+                  <div style={{ fontSize: '1.2rem', color: '#aaa' }}>
+                    Team: {winner.members.join(', ')}
+                  </div>
+                )}
               </div>
             ) : null;
           })()}
+          <h3 className="jeopardy-font" style={{ color: 'var(--jeopardy-gold)' }}>Game Stats</h3>
+          <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', justifyContent: 'center' }}>
+            {state.stats?.fastestBuzz && (
+              <div className="card text-center" style={{ minWidth: 220 }}>
+                <div style={{ fontSize: '1.2rem', fontWeight: 700 }}>Fastest Buzz</div>
+                <div style={{ fontSize: '1.5rem', color: '#2ecc71' }}>{state.stats.fastestBuzz.teamName}</div>
+                <div style={{ fontSize: '1rem', color: '#aaa' }}>{(state.stats.fastestBuzz.time / 1000).toFixed(2)}s</div>
+              </div>
+            )}
+            {state.stats?.mostBuzzes && (
+              <div className="card text-center" style={{ minWidth: 220 }}>
+                <div style={{ fontSize: '1.2rem', fontWeight: 700 }}>Most Buzz-ins</div>
+                <div style={{ fontSize: '1.5rem', color: '#2ecc71' }}>{state.stats.mostBuzzes.teamName}</div>
+                <div style={{ fontSize: '1rem', color: '#aaa' }}>{state.stats.mostBuzzes.count} buzzes</div>
+              </div>
+            )}
+          </div>
           <h3 className="jeopardy-font" style={{ color: 'var(--jeopardy-gold)' }}>Standings</h3>
           <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap', justifyContent: 'center' }}>
             {teams?.sort((a, b) => b.score - a.score).map((team, idx) => (
