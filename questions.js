@@ -5,61 +5,51 @@ export const defaultRounds = [
       {
         name: "Ephesians",
         clues: [
-          { value: 200, question: "In Ephesians, Paul says we are saved by grace through this.", answer: "What is faith?" },
-          { value: 400, question: "Ephesians 6 calls this the 'sword of the Spirit'.", answer: "What is the word of God?" },
-          { value: 600, question: "In Ephesians, Paul tells Christians to put on the full armor of this.", answer: "What is God?" },
-          { value: 800, question: "Ephesians 2 says we are God's workmanship, created in Christ Jesus to do this.", answer: "What is good works?" },
-          { value: 1000, question: "In Ephesians, Paul prays that believers would know the height, depth, length, and width of this.", answer: "What is the love of Christ?" }
+          { value: 100, question: "According to Ephesians, salvation comes by grace through what?", answer: "Faith" },
+          { value: 200, question: "Paul says believers were once 'dead' because of what?", answer: "Trespasses and sins" },
+          { value: 400, question: "Paul quotes Genesis when discussing marriage. Complete: 'For this reason a man shall leave his father and mother...'", answer: "...and hold fast to his wife, and the two shall become one flesh." },
+          { value: 800, question: "Name all six pieces of the Armor of God in order.", answer: "Belt of Truth; Breastplate of Righteousness; Shoes of the Gospel of Peace; Shield of Faith; Helmet of Salvation; Sword of the Spirit" },
+          { value: 1000, question: "Ephesians contains two prayers by Paul. Name one thing he specifically prays believers would understand or experience.", answer: "Hope of His calling; riches of His inheritance; greatness of His power; strength through the Spirit; Christ dwelling in hearts; rooted in love; know Christ's love; fullness of God" }
         ]
       },
       {
-        name: "Old Testament Heroes",
+        name: "Who Am I?",
         clues: [
-          { value: 200, question: "He built an ark and saved his family from the flood.", answer: "Who is Noah?" },
-          { value: 400, question: "This shepherd boy defeated Goliath with a sling.", answer: "Who is David?" },
-          { value: 600, question: "God spoke to Moses from this burning object.", answer: "What is a bush?" },
-          { value: 800, question: "She became queen of Persia and saved her people.", answer: "Who is Esther?" },
-          { value: 1000, question: "This prophet was swallowed by a great fish.", answer: "Who is Jonah?" }
+          { value: 100, question: "I interpreted Pharaoh's dreams.", answer: "Joseph" },
+          { value: 200, question: "I challenged the prophets of Baal on Mount Carmel.", answer: "Elijah" },
+          { value: 400, question: "I was commander of the Syrian army and was healed of leprosy.", answer: "Naaman" },
+          { value: 800, question: "I was high priest when young Samuel first heard God's voice.", answer: "Eli" },
+          { value: 1000, question: "Though my father was King Saul, I made a covenant with David that cost me my future throne.", answer: "Jonathan" }
         ]
       },
       {
-        name: "New Testament Miracles",
+        name: "Miracles of Jesus",
         clues: [
-          { value: 200, question: "Jesus turned this into wine at the wedding in Cana.", answer: "What is water?" },
-          { value: 400, question: "Jesus fed 5,000 men with five loaves and two of these.", answer: "What are fish?" },
-          { value: 600, question: "Jesus walked on this body of water.", answer: "What is the Sea of Galilee?" },
-          { value: 800, question: "Jesus raised this man from the dead in Bethany.", answer: "Who is Lazarus?" },
-          { value: 1000, question: "This disciple was lowered through a roof to be healed by Jesus.", answer: "Who is the paralyzed man?" }
+          { value: 100, question: "Jesus calmed this during a storm.", answer: "The wind and the sea" },
+          { value: 200, question: "Jesus healed ten men suffering from what disease?", answer: "Leprosy" },
+          { value: 400, question: "Which miracle is recorded in all four Gospels?", answer: "Feeding of the 5,000" },
+          { value: 800, question: "After healing the man born blind, Jesus later revealed Himself as whom?", answer: "The Son of Man (Messiah)" },
+          { value: 1000, question: "When Jesus raised Jairus's daughter, what Aramaic phrase did He say?", answer: "Talitha koum" }
         ]
       },
       {
-        name: "Bible Beginnings",
+        name: "Old Testament",
         clues: [
-          { value: 200, question: "The first book of the Bible.", answer: "What is Genesis?" },
-          { value: 400, question: "God created these lights on the fourth day.", answer: "What are the sun, moon, and stars?" },
-          { value: 600, question: "Adam and Eve lived in this garden.", answer: "What is Eden?" },
-          { value: 800, question: "Cain killed his brother, whose name was this.", answer: "Who is Abel?" },
-          { value: 1000, question: "The rainbow was given as a sign of this covenant.", answer: "What is the Noahic covenant?" }
+          { value: 100, question: "Who received the Ten Commandments?", answer: "Moses" },
+          { value: 200, question: "What river did Israel cross to enter the Promised Land?", answer: "Jordan River" },
+          { value: 400, question: "Which judge defeated the Midianites with only 300 men?", answer: "Gideon" },
+          { value: 800, question: "Which prophet confronted King David after his sin with Bathsheba?", answer: "Nathan" },
+          { value: 1000, question: "List five of Jacob's sons.", answer: "Any five of the twelve tribes" }
         ]
       },
       {
-        name: "Names of Jesus",
+        name: "Bible Potpourri",
         clues: [
-          { value: 200, question: "Jesus said He is this for the world.", answer: "What is the light?" },
-          { value: 400, question: "Jesus called Himself this kind of gate for the sheep.", answer: "What is the door/gate?" },
-          { value: 600, question: "In John 14, Jesus says He is this, and no one comes to the Father except through Him.", answer: "What is the way?" },
-          { value: 800, question: "Jesus is called this in John 1, who takes away the sin of the world.", answer: "Who is the Lamb of God?" },
-          { value: 1000, question: "Revelation calls Jesus this Greek letter, the beginning and the end.", answer: "What is Alpha and Omega?" }
-        ]
-      },
-      {
-        name: "Books of the Bible",
-        clues: [
-          { value: 200, question: "The last book of the New Testament.", answer: "What is Revelation?" },
-          { value: 400, question: "This gospel was written by a physician and companion of Paul.", answer: "What is Luke?" },
-          { value: 600, question: "This Old Testament book is a collection of 150 songs.", answer: "What is Psalms?" },
-          { value: 800, question: "This book tells the story of Israel's exodus from Egypt.", answer: "What is Exodus?" },
-          { value: 1000, question: "This New Testament letter is famous for its chapter on love.", answer: "What is 1 Corinthians?" }
+          { value: 100, question: "How many books are in the Bible?", answer: "66" },
+          { value: 200, question: "Who wrote most of the New Testament letters?", answer: "Paul" },
+          { value: 400, question: "Which Gospel does NOT include the Parable of the Prodigal Son?", answer: "Matthew, Mark, and John" },
+          { value: 800, question: "Which two Old Testament figures appeared with Jesus at the Transfiguration?", answer: "Moses and Elijah" },
+          { value: 1000, question: "Name the first five books of the Bible in order.", answer: "Genesis, Exodus, Leviticus, Numbers, Deuteronomy" }
         ]
       }
     ]
